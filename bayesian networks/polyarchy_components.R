@@ -6,6 +6,7 @@ library(tidyr)
 library(bnlearn)
 library(bnstruct)
 library(Rgraphviz)
+library(zoo)
 setwd("~/Documents/Fall 2017/FASDEM/bayesian networks/")
 
 vdem <- readRDS("~/Dropbox/V-Dem Research and DS for Research/V-Dem data for Analysis/V-Dem Datasets/v7.1/Team DS/V-Dem-DS-CY-v7.1.rds")
@@ -17,28 +18,45 @@ ord <- as.data.frame(vdem %>%
                        "v2psoppaut_ord", "v2elmulpar_ord", "v2cseeorgs_ord", "v2csreprss_ord",
                        "e_v2x_suffr_5C", "v2elembaut_ord", "v2elembcap_ord", "v2elrgstry_ord",
                        "v2elvotbuy_ord", "v2elirreg_ord", "v2elintim_ord", "v2elpeace_ord",
-                       "v2elfrfair_ord") %>%
-    distinct_("country_name", "e_v2x_polyarchy_5C","v2mecenefi_ord", "v2mecenefi_ord", 
-              "v2meharjrn_ord", "v2meslfcen_ord",
-              "v2mebias_ord", "v2mecrit_ord", "v2merange_ord", "v2cldiscm_ord",
-              "v2cldiscw_ord", "v2clacfree_ord", "v2psparban_ord", "v2psbars_ord",
-              "v2psoppaut_ord", "v2elmulpar_ord", "v2cseeorgs_ord", "v2csreprss_ord",
-              "e_v2x_suffr_5C", "v2elembaut_ord", "v2elembcap_ord", "v2elrgstry_ord",
-              "v2elvotbuy_ord", "v2elirreg_ord", "v2elintim_ord", "v2elpeace_ord",
-              "v2elfrfair_ord", .keep_all = T) %>%
-    group_by(country_name) %>%
-    mutate(duration = year(lead(historical_date)) - year(historical_date)))
+                       "v2elfrfair_ord")) #%>%
+    # distinct_("country_name", "e_v2x_polyarchy_5C","v2mecenefi_ord", "v2mecenefi_ord", 
+    #           "v2meharjrn_ord", "v2meslfcen_ord",
+    #           "v2mebias_ord", "v2mecrit_ord", "v2merange_ord", "v2cldiscm_ord",
+    #           "v2cldiscw_ord", "v2clacfree_ord", "v2psparban_ord", "v2psbars_ord",
+    #           "v2psoppaut_ord", "v2elmulpar_ord", "v2cseeorgs_ord", "v2csreprss_ord",
+    #           "e_v2x_suffr_5C", "v2elembaut_ord", "v2elembcap_ord", "v2elrgstry_ord",
+    #           "v2elvotbuy_ord", "v2elirreg_ord", "v2elintim_ord", "v2elpeace_ord",
+    #           "v2elfrfair_ord", .keep_all = T) %>%
+    # group_by(country_name) %>%
+    # mutate(duration = (lead(historical_date)) - (historical_date), e_v2x_polyarchy_5C = e_v2x_polyarchy_5C * 4, e_v2x_suffr_5C = e_v2x_suffr_5C * 4))
 
 ord_diff <- as.data.frame(ord %>%
-  group_by(country_name) %>%
-  mutate_if(is.numeric, funs(diff = . - lag(., 1))) %>%
-  select(-duration_diff))
+                            mutate(e_v2x_polyarchy_5C = e_v2x_polyarchy_5C * 4, e_v2x_suffr_5C = e_v2x_suffr_5C * 4) %>%
+                            group_by(country_name) %>%
+                            mutate_if(is.numeric, funs(diff = . - lag(., 1))))
 ord_diff$total_diff <- apply(ord_diff[,grep("diff", colnames(ord_diff))], 1, sum)
 
-ord_lags <- as.data.frame(ord %>%
-                            group_by(country_name) %>%
-                            mutate_if(is.numeric, funs(l1 = lag(. , 1), l2 = lag( . , 2))))
+#ord_lags <- as.data.frame(ord %>%
+#                            group_by(country_name) %>%
+#                            mutate_if(is.numeric, funs(l1 = lag(. , 1), l2 = lag( . , 2))))
                           
+#append indicator for successful sequence
+
+ord_diff_seq <- ord_diff %>%
+  dplyr::group_by(country_name) %>%
+  dplyr::mutate(suc_seq = findMovement(e_v2x_polyarchy_5C, direction = "up", upper_lim = 3, lbuffer = 3)) %>%
+  ungroup() %>%
+  filter(e_v2x_polyarchy_5C <= 3, suc_seq >=1) 
+
+ql_dat <- ord_diff_seq[,colnames(ord_diff_seq)[grep("_diff", colnames(ord_diff_seq))]]
+
+test <- ql_matrix(ql_dat, colnames(ql_dat), na.rm = T)
+
+
+
+
+
+
 
 #polyarchy changes
 poly_up <- filter(ord_diff, e_v2x_polyarchy_5C_diff > 0)

@@ -1,0 +1,11 @@
+FASDEM vectors
+
+first set of vectors is simply a vector with 124 slots for each country/sequence. each slot is a level of a feature (from 0-4). The contents of each slot is the year in the sequence for which that feature-level first appeared. Any levels that are skipped, or must have existed prior to the start of the sequence are filled in with the appropriate order value (i.e. if a country starts a sequence with suffrage level 2, 0 and 1 are assigned a value of 0. if a country goes from 0 to 2 in the 3rd year of a sequence, then the 2 gets a 3 and the 1 also gets a 3). all vector values are normalized by dividing them by the duration of the sequence.
+
+second approach: instead of having an observation for each level of each variable, I am coding different characteristics of the sequence event.  the minimum value, the maximum value, how long it took for the feature to get from min to max and the point in the sequence where there was first movement. Aside from a clustering analysis, this information may also be useful for summarizing order info.
+
+
+challenges remaining- how do i code NAs? in some cases the codes go from NA to 3...so i only have one observation with no information about when that actually came in...this is a huge problem. imputation is obviously problematic here and we dont necessarily want to do it, but i am concerned about what this means for how we can reliably sequence this...
+
+descriptives:
+boxplot of mins, max's, time to max, time to first move, 

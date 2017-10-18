@@ -7,7 +7,8 @@ library(bnlearn)
 library(bnstruct)
 library(Rgraphviz)
 library(zoo)
-setwd("~/Documents/Fall 2017/FASDEM/bayesian networks/")
+library(seqR)
+setwd("~/Documents/Fall 2017/FASDEM/")
 
 vdem <- readRDS("~/Dropbox/V-Dem Research and DS for Research/V-Dem data for Analysis/V-Dem Datasets/v7.1/Team DS/V-Dem-DS-CY-v7.1.rds")
 ord <- as.data.frame(vdem %>%
@@ -34,7 +35,7 @@ ord_diff <- as.data.frame(ord %>%
                             mutate(e_v2x_polyarchy_5C = e_v2x_polyarchy_5C * 4, e_v2x_suffr_5C = e_v2x_suffr_5C * 4) %>%
                             group_by(country_name) %>%
                             mutate_if(is.numeric, funs(diff = . - lag(., 1))))
-ord_diff$total_diff <- apply(ord_diff[,grep("diff", colnames(ord_diff))], 1, sum)
+ord_diff$total_diff <- apply(ord_diff[,grep("diff", colnames(ord_diff))], 1, function(x) sum(x, na.rm = T))
 
 #ord_lags <- as.data.frame(ord %>%
 #                            group_by(country_name) %>%
@@ -48,9 +49,9 @@ ord_diff_seq <- ord_diff %>%
   ungroup() %>%
   filter(e_v2x_polyarchy_5C <= 3, suc_seq >=1) 
 
-ql_dat <- ord_diff_seq[,colnames(ord_diff_seq)[grep("_diff", colnames(ord_diff_seq))]]
+ql_dat <- ord_diff_seq[,colnames(ord_diff_seq)[grep("_diff", colnames(ord_diff_seq))]][,1:25]
 
-test <- ql_matrix(ql_dat, colnames(ql_dat), na.rm = T)
+test <- ql_matrix(ql_dat, colnames(ql_dat), na.rm = T) #this function isn't built for this...need modifications.
 
 
 
